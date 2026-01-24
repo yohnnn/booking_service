@@ -34,7 +34,7 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("📬 Notification consumer started")
+	log.Println("Notification consumer started")
 
 	go func() {
 		for {
@@ -69,7 +69,7 @@ func handleMessage(ctx context.Context, msg kafka.Message) error {
 	}
 
 	log.Printf(
-		"📧 Notify user=%s booking=%s concert=%s seat=%d",
+		"Notify user=%s booking=%s concert=%s seat=%d",
 		evt.UserID,
 		evt.BookingID,
 		evt.ConcertID,

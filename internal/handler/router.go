@@ -40,6 +40,7 @@ func (r *Router) InitRoutes() *chi.Mux {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
+	router.Use(mw.Logger(r.logger))
 
 	router.Route("/api", func(mr chi.Router) {
 
