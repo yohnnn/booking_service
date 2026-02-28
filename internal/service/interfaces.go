@@ -23,3 +23,7 @@ type Booking interface {
 	CreateBooking(ctx context.Context, userID, concertID uuid.UUID, seat int) (*models.Booking, error)
 	GetUserBookings(ctx context.Context, userID uuid.UUID) ([]models.Booking, error)
 }
+
+type TxManager interface {
+	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
+}

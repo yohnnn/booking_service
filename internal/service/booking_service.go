@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/google/uuid"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/yohnnn/booking_service/internal/event"
 	"github.com/yohnnn/booking_service/internal/models"
 	"github.com/yohnnn/booking_service/internal/repository"
-	"github.com/yohnnn/booking_service/internal/repository/tx"
 )
 
 type BookingService struct {
@@ -19,8 +19,9 @@ type BookingService struct {
 	bookingRepo   repository.BookingRepository
 	concertRepo   repository.ConcertRepository
 	cacheRepo     cache.ConcertCacheRepository
-	manager       *tx.Manager
+	manager       TxManager
 	eventProducer event.EventProducer
+	wg            sync.WaitGroup
 }
 
 func NewBookingService(
@@ -28,7 +29,7 @@ func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	concertRepo repository.ConcertRepository,
 	cacheRepo cache.ConcertCacheRepository,
-	manager *tx.Manager,
+	manager TxManager,
 	eventProducer event.EventProducer,
 ) *BookingService {
 	return &BookingService{
@@ -73,7 +74,10 @@ func (s *BookingService) CreateBooking(
 
 	_ = s.cacheRepo.Delete(ctx)
 
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
+
 		evt := event.BookingCreatedEvent{
 			BookingID: booking.ID.String(),
 			UserID:    booking.UserID.String(),
@@ -87,6 +91,10 @@ func (s *BookingService) CreateBooking(
 	}()
 
 	return booking, nil
+}
+
+func (s *BookingService) Wait() {
+	s.wg.Wait()
 }
 
 func (s *BookingService) GetUserBookings(ctx context.Context, userID uuid.UUID) ([]models.Booking, error) {
