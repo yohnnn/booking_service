@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -19,18 +20,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := run(logger, cfg); err != nil {
+		logger.Error("fatal error", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run(logger *slog.Logger, cfg *config.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	application, err := app.NewApp(ctx, logger, cfg)
 	if err != nil {
-		logger.Error("failed to create app", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to create app: %w", err)
 	}
 	defer application.Close()
 
-	if err := application.Run(); err != nil {
-		logger.Error("app run failed", "error", err)
-		os.Exit(1)
-	}
+	return application.Run()
 }

@@ -11,6 +11,8 @@ const (
 	ErrCodeNotFound         = "NOT_FOUND"
 	ErrCodeValidationFailed = "VALIDATION_FAILED"
 	ErrCodeUnauthorized     = "UNAUTHORIZED"
+	ErrCodeAlreadyExists    = "ALREADY_EXISTS"
+	ErrCodeNoSeats          = "NO_SEATS"
 )
 
 type ErrorResponse struct {
@@ -26,5 +28,5 @@ func WriteErrorResponse(w http.ResponseWriter, status int, code string, msg stri
 	errResp.Error.Message = msg
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(errResp)
+	_ = json.NewEncoder(w).Encode(errResp)
 }

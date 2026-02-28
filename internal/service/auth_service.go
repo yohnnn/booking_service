@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,13 +14,20 @@ import (
 )
 
 type AuthService struct {
+	logger    *slog.Logger
 	userRepo  repository.UserRepository
 	secretKey []byte
 	tokenTTL  time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepository, secretKey string, tokenTTL time.Duration) *AuthService {
+func NewAuthService(
+	logger *slog.Logger,
+	userRepo repository.UserRepository,
+	secretKey string,
+	tokenTTL time.Duration,
+) *AuthService {
 	return &AuthService{
+		logger:    logger,
 		userRepo:  userRepo,
 		secretKey: []byte(secretKey),
 		tokenTTL:  tokenTTL,
@@ -27,7 +35,6 @@ func NewAuthService(userRepo repository.UserRepository, secretKey string, tokenT
 }
 
 func (s *AuthService) Register(ctx context.Context, email, password string) (*models.User, error) {
-
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -66,7 +73,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 }
 
 func (s *AuthService) ParseToken(tokenString string) (uuid.UUID, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}

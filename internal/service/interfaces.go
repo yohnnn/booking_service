@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+
 	"github.com/yohnnn/booking_service/internal/models"
 )
 

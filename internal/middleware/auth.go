@@ -18,13 +18,23 @@ func Auth(authService service.Auth) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				response.WriteErrorResponse(w, http.StatusUnauthorized, response.ErrCodeUnauthorized, "missing authorization header")
+				response.WriteErrorResponse(
+					w,
+					http.StatusUnauthorized,
+					response.ErrCodeUnauthorized,
+					"missing authorization header",
+				)
 				return
 			}
 
 			headerParts := strings.Split(authHeader, " ")
 			if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-				response.WriteErrorResponse(w, http.StatusUnauthorized, response.ErrCodeUnauthorized, "invalid authorization header")
+				response.WriteErrorResponse(
+					w,
+					http.StatusUnauthorized,
+					response.ErrCodeUnauthorized,
+					"invalid authorization header",
+				)
 				return
 			}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/yohnnn/booking_service/internal/models"
 	"github.com/yohnnn/booking_service/internal/repository/tx"
 )

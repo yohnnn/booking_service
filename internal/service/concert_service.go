@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 
@@ -11,19 +12,24 @@ import (
 )
 
 type ConcertService struct {
+	logger      *slog.Logger
 	concertRepo repository.ConcertRepository
 	cacheRepo   cache.ConcertCacheRepository
 }
 
-func NewConcertService(concertRepo repository.ConcertRepository, cacheRepo cache.ConcertCacheRepository) *ConcertService {
+func NewConcertService(
+	logger *slog.Logger,
+	concertRepo repository.ConcertRepository,
+	cacheRepo cache.ConcertCacheRepository,
+) *ConcertService {
 	return &ConcertService{
+		logger:      logger,
 		concertRepo: concertRepo,
 		cacheRepo:   cacheRepo,
 	}
 }
 
 func (s *ConcertService) GetAll(ctx context.Context) ([]models.Concert, error) {
-
 	if concerts, err := s.cacheRepo.Get(ctx); err == nil && concerts != nil {
 		return concerts, nil
 	}

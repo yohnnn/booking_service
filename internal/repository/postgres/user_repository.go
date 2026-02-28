@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/yohnnn/booking_service/internal/models"
 	"github.com/yohnnn/booking_service/internal/repository/tx"
 )
@@ -27,7 +28,12 @@ func (r *UserRepo) Create(ctx context.Context, user *models.User) error {
         VALUES ($1, $2)
         RETURNING id, created_at
     `
-	if err := tx.Executor(ctx, r.db).QueryRow(ctx, query, user.Email, user.PasswordHash).Scan(&user.ID, &user.CreatedAt); err != nil {
+	if err := tx.Executor(ctx, r.db).
+		QueryRow(ctx, query, user.Email, user.PasswordHash).
+		Scan(&user.ID, &user.CreatedAt); err != nil {
+		if IsUnique(err) {
+			return models.ErrAlreadyExists
+		}
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 	return nil

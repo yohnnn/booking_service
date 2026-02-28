@@ -2,12 +2,16 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/yohnnn/booking_service/internal/dto"
 	"github.com/yohnnn/booking_service/internal/handler/response"
+	"github.com/yohnnn/booking_service/internal/models"
 	"github.com/yohnnn/booking_service/internal/service"
 )
 
@@ -41,8 +45,23 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.Register(r.Context(), input.Email, input.Password)
 	if err != nil {
+		if errors.Is(err, models.ErrAlreadyExists) {
+			h.logger.Warn("user already exists", "email", input.Email)
+			response.WriteErrorResponse(
+				w,
+				http.StatusConflict,
+				response.ErrCodeAlreadyExists,
+				"user with this email already exists",
+			)
+			return
+		}
 		h.logger.Error("failed to register user", "error", err)
-		response.WriteErrorResponse(w, http.StatusInternalServerError, response.ErrCodeInternal, err.Error())
+		response.WriteErrorResponse(
+			w,
+			http.StatusInternalServerError,
+			response.ErrCodeInternal,
+			"internal server error",
+		)
 		return
 	}
 
@@ -65,8 +84,23 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.service.Login(r.Context(), input.Email, input.Password)
 	if err != nil {
+		if errors.Is(err, models.ErrNotFound) || errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			h.logger.Warn("invalid credentials", "email", input.Email)
+			response.WriteErrorResponse(
+				w,
+				http.StatusUnauthorized,
+				response.ErrCodeUnauthorized,
+				"invalid email or password",
+			)
+			return
+		}
 		h.logger.Error("failed to login", "error", err)
-		response.WriteErrorResponse(w, http.StatusUnauthorized, response.ErrCodeUnauthorized, err.Error())
+		response.WriteErrorResponse(
+			w,
+			http.StatusInternalServerError,
+			response.ErrCodeInternal,
+			"internal server error",
+		)
 		return
 	}
 

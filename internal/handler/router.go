@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
 	v1 "github.com/yohnnn/booking_service/internal/handler/v1"
 	mw "github.com/yohnnn/booking_service/internal/middleware"
 	"github.com/yohnnn/booking_service/internal/service"
@@ -43,7 +44,6 @@ func (r *Router) InitRoutes() *chi.Mux {
 	router.Use(mw.Logger(r.logger))
 
 	router.Route("/api", func(mr chi.Router) {
-
 		mr.Group(func(ar chi.Router) {
 			ar.Post("/auth/register", r.authHandler.Register)
 			ar.Post("/auth/login", r.authHandler.Login)

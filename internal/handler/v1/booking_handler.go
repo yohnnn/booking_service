@@ -2,14 +2,17 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+
 	"github.com/yohnnn/booking_service/internal/dto"
 	"github.com/yohnnn/booking_service/internal/handler/response"
 	"github.com/yohnnn/booking_service/internal/middleware"
+	"github.com/yohnnn/booking_service/internal/models"
 	"github.com/yohnnn/booking_service/internal/service"
 )
 
@@ -57,8 +60,32 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	booking, err := h.service.CreateBooking(r.Context(), userID, concertID, input.Seat)
 	if err != nil {
-		h.logger.Error("failed to create booking", "error", err)
-		response.WriteErrorResponse(w, http.StatusInternalServerError, response.ErrCodeInternal, err.Error())
+		switch {
+		case errors.Is(err, models.ErrNoSeats):
+			h.logger.Warn("no seats available", "concert_id", concertID)
+			response.WriteErrorResponse(
+				w,
+				http.StatusConflict,
+				response.ErrCodeNoSeats,
+				"no seats available for this concert",
+			)
+		case errors.Is(err, models.ErrAlreadyExists):
+			h.logger.Warn("booking already exists", "concert_id", concertID, "seat", input.Seat)
+			response.WriteErrorResponse(
+				w,
+				http.StatusConflict,
+				response.ErrCodeAlreadyExists,
+				"this seat is already booked",
+			)
+		default:
+			h.logger.Error("failed to create booking", "error", err)
+			response.WriteErrorResponse(
+				w,
+				http.StatusInternalServerError,
+				response.ErrCodeInternal,
+				"internal server error",
+			)
+		}
 		return
 	}
 
@@ -75,7 +102,12 @@ func (h *BookingHandler) GetUserBookings(w http.ResponseWriter, r *http.Request)
 	bookings, err := h.service.GetUserBookings(r.Context(), userID)
 	if err != nil {
 		h.logger.Error("failed to get user bookings", "error", err)
-		response.WriteErrorResponse(w, http.StatusInternalServerError, response.ErrCodeInternal, err.Error())
+		response.WriteErrorResponse(
+			w,
+			http.StatusInternalServerError,
+			response.ErrCodeInternal,
+			"internal server error",
+		)
 		return
 	}
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+
 	"github.com/yohnnn/booking_service/internal/event"
 )
 
@@ -62,7 +63,7 @@ func main() {
 	log.Println("Shutting down consumer...")
 }
 
-func handleMessage(ctx context.Context, msg kafka.Message) error {
+func handleMessage(_ context.Context, msg kafka.Message) error {
 	var evt event.BookingCreatedEvent
 	if err := json.Unmarshal(msg.Value, &evt); err != nil {
 		return err

@@ -1,12 +1,15 @@
 package v1
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+
 	"github.com/yohnnn/booking_service/internal/handler/response"
+	"github.com/yohnnn/booking_service/internal/models"
 	"github.com/yohnnn/booking_service/internal/service"
 )
 
@@ -44,8 +47,18 @@ func (h *ConcertHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	concert, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			h.logger.Warn("concert not found", "id", id)
+			response.WriteErrorResponse(w, http.StatusNotFound, response.ErrCodeNotFound, "concert not found")
+			return
+		}
 		h.logger.Error("failed to get concert", "error", err)
-		response.WriteErrorResponse(w, http.StatusInternalServerError, response.ErrCodeInternal, err.Error())
+		response.WriteErrorResponse(
+			w,
+			http.StatusInternalServerError,
+			response.ErrCodeInternal,
+			"internal server error",
+		)
 		return
 	}
 

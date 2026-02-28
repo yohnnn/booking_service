@@ -1,0 +1,147 @@
+version: "2"
+
+issues:
+  max-same-issues: 50
+
+formatters:
+  enable:
+    - goimports
+    - golines
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/yohnnn/booking_service
+    golines:
+      max-len: 120
+
+linters:
+  enable:
+    - errcheck
+    - errorlint
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - bodyclose
+    - noctx
+    - sqlclosecheck
+    - rowserrcheck
+    - gosec
+    - gocritic
+    - nilerr
+    - nilnil
+    - wastedassign
+    - makezero
+    - durationcheck
+    - copyloopvar
+    - intrange
+    - mirror
+    - nosprintfhostport
+    - perfsprint
+    - predeclared
+    - reassign
+    - recvcheck
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - sloglint
+    - forbidigo
+    - revive
+    - canonicalheader
+    - nolintlint
+
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+      settings:
+        shadow:
+          strict: false
+
+    errcheck:
+      check-type-assertions: true
+
+    gocritic:
+      settings:
+        captLocal:
+          paramsOnly: false
+        underef:
+          skipRecvDeref: false
+
+    gosec:
+      excludes:
+        - G117
+
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1016
+        - -QF1008
+
+    sloglint:
+      no-global: "default"
+      context: "scope"
+
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print(|f|ln)$
+          msg: "Use structured logger (slog) instead of fmt.Print"
+        - pattern: ^print(|ln)$
+          msg: "Use structured logger (slog)"
+
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+
+    nolintlint:
+      allow-no-explanation: [ funlen, gocognit, golines, gocritic ]
+      require-explanation: false
+      require-specific: true
+
+    unparam:
+      check-exported: false
+
+    perfsprint:
+      strconcat: false
+
+    reassign:
+      patterns:
+        - ".*"
+
+  exclusions:
+    warn-unused: true
+    presets:
+      - std-error-handling
+      - common-false-positives
+    rules:
+      - path: '_test\.go'
+        linters:
+          - bodyclose
+          - dupl
+          - errcheck
+          - gosec
+          - noctx
+          - unparam
+          - gocritic
+
+      - path: 'cmd/.*/main\.go'
+        linters:
+          - forbidigo
+
+      - path: 'internal/config'
+        linters:
+          - gosec
+
+      - source: 'TODO'
+        linters: [ godot ]
+
+      - text: 'shadow: declaration of "err"'
+        linters: [ govet ]
+
+      - text: 'shadow: declaration of "ok"'
+        linters: [ govet ]

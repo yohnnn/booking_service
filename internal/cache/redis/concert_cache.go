@@ -1,11 +1,13 @@
-package cache_redis
+package rediscache
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+
 	"github.com/yohnnn/booking_service/internal/models"
 )
 
@@ -23,7 +25,7 @@ func NewConcertCache(client *redis.Client, ttl time.Duration) *ConcertCache {
 
 func (c *ConcertCache) Get(ctx context.Context) ([]models.Concert, error) {
 	val, err := c.client.Get(ctx, "concerts:all").Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, nil
 	}
 	if err != nil {

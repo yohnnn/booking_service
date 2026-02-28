@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 
@@ -14,6 +15,7 @@ import (
 )
 
 type BookingService struct {
+	logger        *slog.Logger
 	bookingRepo   repository.BookingRepository
 	concertRepo   repository.ConcertRepository
 	cacheRepo     cache.ConcertCacheRepository
@@ -22,6 +24,7 @@ type BookingService struct {
 }
 
 func NewBookingService(
+	logger *slog.Logger,
 	bookingRepo repository.BookingRepository,
 	concertRepo repository.ConcertRepository,
 	cacheRepo cache.ConcertCacheRepository,
@@ -29,6 +32,7 @@ func NewBookingService(
 	eventProducer event.EventProducer,
 ) *BookingService {
 	return &BookingService{
+		logger:        logger,
 		bookingRepo:   bookingRepo,
 		concertRepo:   concertRepo,
 		cacheRepo:     cacheRepo,
@@ -37,11 +41,14 @@ func NewBookingService(
 	}
 }
 
-func (s *BookingService) CreateBooking(ctx context.Context, userID, concertID uuid.UUID, seat int) (*models.Booking, error) {
+func (s *BookingService) CreateBooking(
+	ctx context.Context,
+	userID, concertID uuid.UUID,
+	seat int,
+) (*models.Booking, error) {
 	var booking *models.Booking
 
 	err := s.manager.WithTx(ctx, func(ctx context.Context) error {
-
 		if err := s.concertRepo.DecrementSeats(ctx, concertID); err != nil {
 			return fmt.Errorf("failed to decrement seats (maybe sold out): %w", err)
 		}
@@ -75,7 +82,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, userID, concertID uu
 		}
 
 		if err := s.eventProducer.SendBookingCreated(context.Background(), evt); err != nil {
-			fmt.Printf("Failed to send booking event: %v\n", err)
+			s.logger.Error("failed to send booking event", "error", err)
 		}
 	}()
 
