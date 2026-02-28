@@ -2,7 +2,7 @@
 
 Сервис бронирования билетов на концерты.
 
-REST API сервис по бронированию с Kafka для отправки уведомлений о бронировании, Redis для кэшерования списка концертов, JWT для авторизации.
+REST API сервис по бронированию с Kafka для отправки уведомлений о бронировании, Redis для кэширования списка концертов, JWT для авторизации.
 
 
 ## Технический стек
@@ -13,6 +13,8 @@ REST API сервис по бронированию с Kafka для отправ
 *   Messaging: Apache Kafka + Zookeeper
 *   Роутер: Chi 
 *   Миграции: Goose
+*   Тестирование: gomock + testify
+*   Линтер: golangci-lint v2
 *   Контейнеризация: Docker + Docker Compose
 
 ## Как запустить
@@ -46,9 +48,12 @@ make docker-up
 
 | Команда | Описание |
 | :--- | :--- |
+| `make build` | Собрать бинарники сервера и consumer-а |
 | `make docker-up` | Поднять все сервисы в Docker (с миграциями) |
 | `make docker-down` | Остановить и удалить контейнеры |
 | `make consumer` | Запустить Kafka consumer для обработки событий бронирования |
+| `make test` | Запустить юнит-тесты сервисного слоя |
+| `make lint` | Запустить golangci-lint |
 
 ## API Эндпоинты
 
@@ -73,22 +78,36 @@ make docker-up
 ## Структура проекта
 ```
 ├── cmd
-│   ├── consumer          # Kafka consumer для обработки событий
-│   └── server            # HTTP сервер
+│   ├── consumer         
+│   └── server           
 ├── internal
-│   ├── app              # Инициализация приложения
-│   ├── cache            # Redis кэш для концертов
-│   ├── config           # Конфигурация из ENV
-│   ├── dto              # Data Transfer Objects
-│   ├── event            # Kafka producer и структуры событий
-│   ├── handler          # HTTP handlers (v1 API)
-│   ├── middleware       # HTTP middleware (auth, logger)
-│   ├── models           # Доменные модели
-│   ├── repository       # Слой работы с БД (PostgreSQL)
-│   └── service          # Бизнес-логика
-├── migrations           # SQL миграции (Goose)
-└── docker-compose.yml   # Оркестрация сервисов
+│   ├── app              
+│   ├── cache            
+│   ├── config           
+│   ├── dto              
+│   ├── event            
+│   ├── handler          
+│   ├── middleware       
+│   ├── models           
+│   ├── repository       
+│   └── service          
+├── migrations           
+├── .golangci.yml        
+└── docker-compose.yml  
 ```
+
+## Тестирование
+
+Юнит-тесты покрывают сервисный слой. Зависимости (репозитории, кэш, Kafka producer, менеджер транзакций) мокаются через `gomock`.
+
+```bash
+make test
+```
+
+Покрытые сценарии:
+*   **AuthService** — регистрация, логин, парсинг JWT 
+*   **ConcertService** — получение из кэша, cache miss с fallback на БД, ошибки
+*   **BookingService** — успешная бронь в транзакции, нет мест, дубликат, ошибки репозитория и транзакции
 
 ## Примеры использования
 
